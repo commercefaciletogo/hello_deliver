@@ -1,0 +1,40 @@
+APP="hello_deliver"
+
+BUILD_HOST="build.phoenix.commercefacile.com"
+BUILD_USER="builder"
+BUILD_AT="/home/builder/hello_deliver/builds"
+
+PRODUCTION_HOSTS="staging.phoenix.commercefacile.com"
+PRODUCTION_USER="deployer"
+DELIVER_TO="/home/deployer"
+
+
+pre_erlang_clean_compile() {
+  status "Installing NPM dependencies"
+  __sync_remote "
+    [ -f ~/.profile ] && source ~/.profile
+    set -e
+
+    cd '$BUILD_AT'
+    npm install $SILENCE
+  "
+
+  status "Building static files"
+  __sync_remote "
+    [ -f ~/.profile ] && source ~/.profile
+    set -e
+
+    cd '$BUILD_AT'
+    mkdir -p priv/static
+    npm run deploy $SILENCE
+  "
+
+  status "Running phoenix.digest"
+  __sync_remote "
+    [ -f ~/.profile ] && source ~/.profile
+    set -e
+
+    cd '$BUILD_AT'
+    APP='$APP' MIX_ENV='$TARGET_MIX_ENV' $MIX_CMD phoenix.digest $SILENCE
+  "
+}
